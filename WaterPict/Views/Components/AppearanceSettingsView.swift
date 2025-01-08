@@ -77,11 +77,17 @@ struct AppearanceSettingsView: View {
     ]
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                sharedData.selectedTheme.swiftBackgroundColor.edgesIgnoringSafeArea(.all) // Background color
-
-                VStack {
+        ZStack {
+            sharedData.selectedTheme.swiftBackgroundColor
+                .ignoresSafeArea() // Background Color
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                    
                     Text("Select a Theme")
                         .font(.title)
                         .fontWeight(.semibold)

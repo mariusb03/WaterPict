@@ -12,87 +12,101 @@ struct HelpSupportView: View {
     @EnvironmentObject var sharedData: SharedData
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                sharedData.selectedTheme.swiftBackgroundColor.edgesIgnoringSafeArea(.all) // Background color
-
+        ZStack {
+            sharedData.selectedTheme.swiftBackgroundColor
+                .ignoresSafeArea() // Background Color
+            
+            ScrollView {
                 VStack(spacing: 20) {
-                    Text(NSLocalizedString("Help & Support", comment: "Title for help and support view"))
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.top, 40)
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                    // FAQ Section
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(NSLocalizedString("Frequently Asked Questions", comment: "FAQ section header"))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .center)
-
-                        faqItem(
-                            question: NSLocalizedString("How do I track my water intake?", comment: "FAQ question"),
-                            answer: NSLocalizedString("Go to the Water Intake tab and use the '+' or '-' buttons to adjust your intake!", comment: "FAQ answer")
-                        )
-                        faqItem(
-                            question: NSLocalizedString("How do I set my daily goal?", comment: "FAQ question"),
-                            answer: NSLocalizedString("Go to Settings and select 'Daily Goal' to update your target!", comment: "FAQ answer")
-                        )
+                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .padding(.top,20)
+                    
+                    VStack(spacing: 20) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(sharedData.selectedTheme.swiftRimColor)
+                                .shadow(radius: 5)
+                            
+                            Text(NSLocalizedString("❓ Help & Support ❓", comment: "Title for help and support view"))
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        
+                        // FAQ Section
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(NSLocalizedString("Frequently Asked Questions", comment: "FAQ section header"))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            faqItem(
+                                question: NSLocalizedString("How do I track my water intake?", comment: "FAQ question"),
+                                answer: NSLocalizedString("Go to the Water Intake tab and use the '+' or '-' buttons to adjust your intake!", comment: "FAQ answer")
+                            )
+                            faqItem(
+                                question: NSLocalizedString("How do I set my daily goal?", comment: "FAQ question"),
+                                answer: NSLocalizedString("Go to Settings and select 'Daily Goal' to update your target!", comment: "FAQ answer")
+                            )
+                        }
+                        .padding()
+                        .background(sharedData.selectedTheme.swiftRimColor)
+                        .cornerRadius(10)
+                        .shadow(radius: 5)
+                        .multilineTextAlignment(.center)
+                        
+                        // Contact Us Section
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(NSLocalizedString("Contact info", comment: "Contact Us section header"))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            Button(action: openEmail) {
+                                HStack {
+                                    Image(systemName: "envelope.fill")
+                                        .foregroundColor(.white)
+                                    Text(NSLocalizedString("Email Support", comment: "Email Support button"))
+                                        .foregroundColor(.white)
+                                        .underline()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            
+                            Button(action: openWebsite) {
+                                HStack {
+                                    Image(systemName: "safari.fill")
+                                        .foregroundColor(.white)
+                                    Text(NSLocalizedString("Visit Our Website", comment: "Visit website button"))
+                                        .foregroundColor(.white)
+                                        .underline()
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                        }
+                        .padding()
+                        .background(sharedData.selectedTheme.swiftRimColor)
+                        .cornerRadius(10)
+                        .multilineTextAlignment(.center)
+                        .shadow(radius: 5)
+                        
+                        Spacer()
                     }
                     .padding()
-                    .background(sharedData.selectedTheme.swiftRimColor)
-                    .cornerRadius(10)
-                    .padding(.horizontal, 20)
-                    .multilineTextAlignment(.center)
-
-                    // Contact Us Section
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(NSLocalizedString("Contact Us", comment: "Contact Us section header"))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .center)
-
-                        Button(action: openEmail) {
-                            HStack {
-                                Image(systemName: "envelope.fill")
-                                    .foregroundColor(.white)
-                                Text(NSLocalizedString("Email Support", comment: "Email Support button"))
-                                    .foregroundColor(.white)
-                                    .underline()
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        }
-
-                        Button(action: openWebsite) {
-                            HStack {
-                                Image(systemName: "safari.fill")
-                                    .foregroundColor(.white)
-                                Text(NSLocalizedString("Visit Our Website", comment: "Visit website button"))
-                                    .foregroundColor(.white)
-                                    .underline()
-                                    .multilineTextAlignment(.center)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                    }
-                    .padding()
-                    .background(sharedData.selectedTheme.swiftRimColor)
-                    .cornerRadius(10)
-                    .padding(.horizontal, 20)
-                    .multilineTextAlignment(.center)
-
-                    Spacer()
                 }
-                .padding()
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: 60)
+                    .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 25)
+                    .shadow(radius: 5)
+                    .ignoresSafeArea()
+            )
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: 60)
-                .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 25)
-                .shadow(radius: 5)
-                .ignoresSafeArea()
-        )
     }
 
     // FAQ Item Helper

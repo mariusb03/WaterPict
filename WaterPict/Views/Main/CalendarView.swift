@@ -21,6 +21,7 @@ struct CalendarView: View {
             ZStack {
                 sharedData.selectedTheme.swiftBackgroundColor
                     .ignoresSafeArea()
+                
                 VStack(spacing: 20) {
                     BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
                         .frame(height: 50)

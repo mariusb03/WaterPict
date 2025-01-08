@@ -5,6 +5,7 @@
 //  Created by Marius Bringsvor Rusten on 25/12/2024.
 //
 
+import UserNotifications
 import SwiftUI
 
 class SharedData: ObservableObject {
@@ -45,6 +46,33 @@ class SharedData: ObservableObject {
     }
 
     @Published var pastWaterData: [String: Double] = [:]{
+        didSet {
+            saveToUserDefaults()
+        }
+    }
+    
+    @Published var notificationStartHour: Int = 8 {
+        didSet {
+            saveToUserDefaults() }
+    }
+    
+    @Published var notificationEndHour: Int = 22 {
+        didSet {
+            saveToUserDefaults() }
+    }
+    
+    @Published var notificationInterval: Int = 2 {
+        didSet {
+            saveToUserDefaults() }
+    }
+    
+    @Published var startTime: Date = Calendar.current.startOfDay(for: Date()) {
+        didSet {
+            saveToUserDefaults()
+        }
+    }
+
+    @Published var endTime: Date = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: Date()) ?? Date() {
         didSet {
             saveToUserDefaults()
         }
@@ -225,6 +253,12 @@ class SharedData: ObservableObject {
 
             // Save water intake
             UserDefaults.standard.set(self.waterIntake, forKey: self.waterIntakeKey)
+            
+            // Save startTime
+            UserDefaults.standard.set(startTime, forKey: "startTime")
+
+            // Save endTime
+            UserDefaults.standard.set(endTime, forKey: "endTime")
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: saveTask!)
     }
@@ -265,9 +299,32 @@ class SharedData: ObservableObject {
            let decodedImagesData = try? decoder.decode([String: Data].self, from: savedImagesData) {
             imagesByDate = decodedImagesData.compactMapValues { UIImage(data: $0) }
         }
+        
+        // Load startTime
+        if let savedStartTime = UserDefaults.standard.object(forKey: "startTime") as? Date {
+            startTime = savedStartTime
+        }
+
+        // Load endTime
+        if let savedEndTime = UserDefaults.standard.object(forKey: "endTime") as? Date {
+            endTime = savedEndTime
+        }
 
         // Load water intake for today
         loadTodayData()
+    }
+
+    // MARK: Notification Manager
+    class NotificationManager {
+        static let shared = NotificationManager()
+
+        func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+                DispatchQueue.main.async {
+                    completion(granted)
+                }
+            }
+        }
     }
 
     func resetAllData() {

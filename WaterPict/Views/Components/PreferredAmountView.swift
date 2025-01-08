@@ -15,41 +15,56 @@ struct PreferredAmountView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                headerSection
-                currentPreferredIncrementSection
-                premadeOptionsSection
-                customAmountSection
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(sharedData.selectedTheme.swiftBackgroundColor.edgesIgnoringSafeArea(.all))
-            .alert(isPresented: $showAlert) {
-                Alert(
-                    title: Text(alertTitle),
-                    message: Text(alertMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 60)
-                .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 25)
-                .shadow(radius: 5)
+        ZStack {
+            sharedData.selectedTheme.swiftBackgroundColor
                 .ignoresSafeArea()
-        )
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .padding(.top,20)
+                    
+                    headerSection
+                    currentPreferredIncrementSection
+                    premadeOptionsSection
+                    customAmountSection
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(sharedData.selectedTheme.swiftBackgroundColor.edgesIgnoringSafeArea(.all))
+                .alert(isPresented: $showAlert) {
+                    Alert(
+                        title: Text(alertTitle),
+                        message: Text(alertMessage),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 60)
+                    .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 25)
+                    .shadow(radius: 5)
+                    .ignoresSafeArea()
+            )
+        }
     }
 
     // MARK: - Header Section
     private var headerSection: some View {
-        Text("Set Preferred Increment")
-            .font(.title)
-            .fontWeight(.semibold)
-            .foregroundColor(sharedData.selectedTheme.swiftTextColor)
-            .padding(.top, 50)
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(sharedData.selectedTheme.swiftRimColor)
+                .padding(.horizontal)
+                .shadow(radius: 5)
+            Text("Set Preferred Increment")
+                .font(.title)
+                .fontWeight(.semibold)
+                .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                .padding()
+        }
     }
-
     // MARK: - Current Preferred Increment Section
     private var currentPreferredIncrementSection: some View {
         VStack(spacing: 10) {

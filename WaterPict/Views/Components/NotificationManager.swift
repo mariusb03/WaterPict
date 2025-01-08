@@ -1,3 +1,11 @@
+//
+//  NotificationManager.swift
+//  WaterPict
+//
+//  Created by Marius Bringsvor Rusten on 08/01/2025.
+//
+
+
 import UserNotifications
 import Foundation
 
