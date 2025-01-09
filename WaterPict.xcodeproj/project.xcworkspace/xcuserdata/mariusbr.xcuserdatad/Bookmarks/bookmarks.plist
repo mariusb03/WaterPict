@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>top-level-items</key>
+	<array>
+		<dict>
+			<key>destination</key>
+			<dict>
+				<key>rebasable-url</key>
+				<dict>
+					<key>payload</key>
+					<string>x-xcode-ci-build-report://build-report/6a501320-ee52-472d-9a2d-9c33f88409e1/91EC5B38-1659-4AF1-826F-9F526F618A00/FADB15E0-EF1E-4FAD-8E3C-67EB4E791432/d25b9547-ed56-433c-835d-7c16815f4222/f854dac4-781c-4822-a677-7634610cc55c</string>
+				</dict>
+				<key>scheme</key>
+				<string>x-xcode-ci-build-report</string>
+				<key>type</key>
+				<string>DVTDocumentLocation</string>
+			</dict>
+			<key>title</key>
+			<string>Archive - macOS</string>
+			<key>type</key>
+			<string>bookmark</string>
+		</dict>
+	</array>
+</dict>
+</plist>
