@@ -9,6 +9,7 @@ struct WaterPicApp: App {
         // Initialize Google Mobile Ads SDK
         GADMobileAds.sharedInstance().start(completionHandler: nil)
         
+        // Request notification permissions and schedule notifications
         NotificationManager.shared.requestNotificationPermission { granted in
             if granted {
                 NotificationManager.shared.scheduleNotifications(startHour: 8, endHour: 22, interval: 2)
@@ -23,7 +24,14 @@ struct WaterPicApp: App {
             ContentView()
                 .environmentObject(sharedData)
                 .preferredColorScheme(.light)
-            
+                .onAppear {
+                    Task { [weak sharedData] in
+                        await SubscriptionManager.shared.checkSubscriptionStatus()
+                        DispatchQueue.main.async {
+                            sharedData?.updateSubscriptionStatus()
+                        }
+                    }
+                }
         }
     }
 }

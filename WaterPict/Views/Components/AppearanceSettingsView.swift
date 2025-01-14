@@ -19,7 +19,10 @@ struct Theme: Identifiable, Equatable {
     var swiftTextColor: Color { Color(textColor) }
 
     static let blueTheme = Theme(backgroundColor: .myBlue, rimColor: .myLightBlue, textColor: .white)
+    
     static let darkTheme = Theme(backgroundColor: .myDark, rimColor: .myLighterDark, textColor: .white)
+    
+    static let LightTheme = Theme(backgroundColor: .white, rimColor: .lightGray, textColor: .darkGray)
     
     static let redTheme = Theme(backgroundColor: .myRed, rimColor: .myLighterRed, textColor: .white)
     
@@ -53,6 +56,11 @@ extension Theme: Codable {
         
         backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .myDark
         rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .myLighterDark
+        
+        backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .white
+        rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .lightGray
+        textColor = UIColor(hex: try container.decode(String.self, forKey: .textColor)) ?? .black
+        
     }
 
     func encode(to encoder: Encoder) throws {
@@ -69,7 +77,7 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @EnvironmentObject var sharedData: SharedData
     @Binding var selectedTheme: Theme
-    let themes: [Theme] = [.blueTheme, .darkTheme, .beigeTheme, .purpleTheme, .redTheme]
+    let themes: [Theme] = [.blueTheme, .darkTheme, .LightTheme, .beigeTheme, .purpleTheme, .redTheme]
 
     let columns = [
         GridItem(.flexible()),
@@ -83,10 +91,17 @@ struct AppearanceSettingsView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
-                        .frame(height: 50)
-                        .padding(.horizontal)
-                        .padding(.top, 20)
+                    if !sharedData.isPremiumUser {
+                        BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                    } else {
+                        // Placeholder to maintain spacing
+                        Color.clear
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    }
                     
                     Text("Select a Theme")
                         .font(.title)

@@ -109,10 +109,17 @@ struct ContentView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
-                        .frame(height: 50)
-                        .padding(.horizontal)
-                    
+                    if !sharedData.isPremiumUser {
+                        BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    } else {
+                        // Placeholder to maintain spacing
+                        Color.clear
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    }
+                            
                     sectionHeader(title: "💧 Today's Intake 💧")
                     
                     GeometryReader { geometry in
@@ -151,10 +158,11 @@ struct ContentView: View {
                     size: CGSize(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
                 )
                 .onAppear {
-                    Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-                        continuousPhase += 0.004
-                    }
+                    startWaveTimer()
                     displayedProgress = sharedData.progressByDate[sharedData.formattedDate(Date())] ?? 0.0
+                }
+                .onDisappear {
+                    stopWaveTimer()
                 }
                 .onChange(of: sharedData.progressByDate[sharedData.formattedDate(Date())]) { newProgress in
                     handleProgressChange(newProgress)
@@ -170,6 +178,21 @@ struct ContentView: View {
                 .shadow(radius: 8)
         )
         .frame(maxWidth: .infinity, alignment: .center) // Center within the available space
+    }
+
+    // Timer Management
+    @State private var waveTimer: Timer?
+
+    private func startWaveTimer() {
+        waveTimer?.invalidate() // Invalidate any existing timer
+        waveTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            continuousPhase += 0.004
+        }
+    }
+
+    private func stopWaveTimer() {
+        waveTimer?.invalidate()
+        waveTimer = nil
     }
     
     // MARK: Placeholder image
@@ -302,9 +325,13 @@ struct ContentView: View {
 }
 
 // MARK: Preview
-struct ContentView_Previews: PreviewProvider {
+struct ContentView_PremiumPreview: PreviewProvider {
     static var previews: some View {
-        ContentView()
-            .environmentObject(SharedData())
+        let premiumUserData = SharedData()
+        premiumUserData.isPremiumUser = true // Set as a premium user
+
+        return ContentView()
+            .environmentObject(premiumUserData)
+            .previewDisplayName("Premium User View")
     }
 }

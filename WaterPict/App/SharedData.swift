@@ -82,12 +82,19 @@ class SharedData: ObservableObject {
     @Published var monthlyGraphData: [Double] = []
     @Published var yearlyGraphData: [Double] = []
     
-    @Published var supportEmail: String = "support@yourapp.com"
+    @Published var supportEmail: String = "mariusbr6@gmail.com"
     @Published var supportWebsite: String = "https://www.yourapp.com"
     
     @Published var showInvalidInputAlert: Bool = false
     @Published var invalidInputMessage: String = ""
-    @Published var isPremium: Bool = false
+    
+    @Published var isPremiumUser: Bool = false {
+            didSet {
+                print("Premium user status updated: \(isPremiumUser)")
+            }
+        }
+    
+    private var subscriptionManager = SubscriptionManager.shared
     
     private var saveTask: DispatchWorkItem?
 
@@ -114,14 +121,24 @@ class SharedData: ObservableObject {
     private let waterIntakeKey = "waterIntake"
 
     init() {
-        if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") == false {
-            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            saveToUserDefaults()
-        } else {
-            loadFromUserDefaults()
+            if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") == false {
+                UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+                saveToUserDefaults()
+            } else {
+                loadFromUserDefaults()
+            }
+            updateGraphData()
+
+            // Fetch subscription data
+        Task { [weak self] in
+                    guard let self = self else { return }
+                    await self.subscriptionManager.fetchProducts()
+                    await self.subscriptionManager.checkSubscriptionStatus()
+                    DispatchQueue.main.async {
+                        self.updateSubscriptionStatus()
+                    }
+                }
         }
-        updateGraphData()
-    }
 
     // MARK: - Helper Methods
     func formattedDate(_ date: Date) -> String {
@@ -129,37 +146,37 @@ class SharedData: ObservableObject {
     }
     
     @MainActor
-    func updateWaterIntake(amount: Double, for date: Date) {
-        let formattedDate = formattedDate(date)
-        let currentIntake = pastWaterData[formattedDate] ?? 0.0
-        let updatedIntake = max(0, currentIntake + amount)
+        func updateWaterIntake(amount: Double, for date: Date) {
+            let formattedDate = formattedDate(date)
+            let currentIntake = pastWaterData[formattedDate] ?? 0.0
+            let updatedIntake = max(0, currentIntake + amount)
 
-        if updatedIntake != currentIntake {
-            pastWaterData[formattedDate] = updatedIntake
-            progressByDate[formattedDate] = updatedIntake / dailyGoal
-            waterIntake = updatedIntake // Update the current water intake
-            updateGraphData()
-            saveToUserDefaults() // Ensure data is saved immediately
+            if updatedIntake != currentIntake {
+                pastWaterData[formattedDate] = updatedIntake
+                progressByDate[formattedDate] = updatedIntake / dailyGoal
+                waterIntake = updatedIntake // Update the current water intake
+                updateGraphData()
+                saveToUserDefaults() // Ensure data is saved immediately
+            }
         }
-    }
 
     func loadWaterIntake(for date: Date) {
-        let formattedDate = formattedDate(date)
-        waterIntake = pastWaterData[formattedDate] ?? 0.0
-    }
+            let formattedDate = formattedDate(date)
+            waterIntake = pastWaterData[formattedDate] ?? 0.0
+        }
 
-    func updateGraphData() {
-        weeklyGraphData = calculateWeeklyGraphData()
-        monthlyGraphData = calculateMonthlyGraphData()
-        yearlyGraphData = calculateYearlyGraphData()
-    }
+        func updateGraphData() {
+            weeklyGraphData = calculateWeeklyGraphData()
+            monthlyGraphData = calculateMonthlyGraphData()
+            yearlyGraphData = calculateYearlyGraphData()
+        }
 
-    func loadTodayData() {
-        let currentDate = formattedDate(Date())
-        waterIntake = pastWaterData[currentDate] ?? 0.0
-        progressByDate[currentDate] = waterIntake / dailyGoal
-        print("Today's water intake loaded: \(waterIntake)") // Debugging log
-    }
+        func loadTodayData() {
+            let currentDate = formattedDate(Date())
+            waterIntake = pastWaterData[currentDate] ?? 0.0
+            progressByDate[currentDate] = waterIntake / dailyGoal
+            print("Today's water intake loaded: \(waterIntake)") // Debugging log
+        }
 
     // MARK: - Graph Data Calculations
     func calculateWeeklyGraphData() -> [Double] {
@@ -313,6 +330,10 @@ class SharedData: ObservableObject {
         // Load water intake for today
         loadTodayData()
     }
+    
+    func updateSubscriptionStatus() {
+            isPremiumUser = subscriptionManager.currentSubscription != nil
+        }
 
     // MARK: Notification Manager
     class NotificationManager {

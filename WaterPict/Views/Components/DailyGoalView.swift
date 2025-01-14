@@ -22,10 +22,17 @@ struct DailyGoalView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
-                        .frame(height: 50)
-                        .padding(.horizontal)
-                        .padding(.top,20)
+                    if !sharedData.isPremiumUser {
+                        BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                    } else {
+                        // Placeholder to maintain spacing
+                        Color.clear
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    }
                     
                     VStack(spacing: 20) {
                         // Header

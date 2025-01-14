@@ -18,10 +18,17 @@ struct HelpSupportView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
-                        .frame(height: 50)
-                        .padding(.horizontal)
-                        .padding(.top,20)
+                    if !sharedData.isPremiumUser {
+                        BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                    } else {
+                        // Placeholder to maintain spacing
+                        Color.clear
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    }
                     
                     VStack(spacing: 20) {
                         ZStack {
@@ -73,18 +80,6 @@ struct HelpSupportView: View {
                                     Text(NSLocalizedString("Email Support", comment: "Email Support button"))
                                         .foregroundColor(.white)
                                         .underline()
-                                }
-                                .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            
-                            Button(action: openWebsite) {
-                                HStack {
-                                    Image(systemName: "safari.fill")
-                                        .foregroundColor(.white)
-                                    Text(NSLocalizedString("Visit Our Website", comment: "Visit website button"))
-                                        .foregroundColor(.white)
-                                        .underline()
-                                        .multilineTextAlignment(.center)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .center)
                             }

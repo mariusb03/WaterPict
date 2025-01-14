@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// Define the ActiveSheet enum
 enum ActiveSheet: Identifiable {
     case dailyGoal
     case preferredAmount
@@ -27,7 +26,9 @@ struct SettingsView: View {
 
     @State private var activeSheet: ActiveSheet? = nil
     @State private var showEraseDataAlert = false
-    @State private var showSuccessAlert = false
+    @State private var showRestoreSuccessAlert = false
+    @State private var restoreErrorMessage: String = ""
+    @State private var showRestoreErrorAlert = false
 
     var body: some View {
         ScrollView {
@@ -36,9 +37,16 @@ struct SettingsView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
-                        .frame(height: 50)
-                        .padding(.horizontal)
+                    if !sharedData.isPremiumUser {
+                        BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    } else {
+                        // Placeholder to maintain spacing
+                        Color.clear
+                            .frame(height: 50)
+                            .padding(.horizontal)
+                    }
                     
                     settingsHeader
                     
@@ -50,6 +58,8 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.horizontal, 16)
+                    
+                    restorePurchasesButton
                     
                     Text("App Version: 1.0.0")
                         .font(.footnote)
@@ -84,10 +94,19 @@ struct SettingsView: View {
                         message: Text("Are you sure you want to reset all app data? This action cannot be undone."),
                         primaryButton: .destructive(Text("Erase")) {
                             sharedData.resetAllData()
-                            showSuccessAlert = true
                         },
                         secondaryButton: .cancel()
                     )
+                }
+                .alert("Restore Successful", isPresented: $showRestoreSuccessAlert) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("Your purchases have been successfully restored.")
+                }
+                .alert("Restore Failed", isPresented: $showRestoreErrorAlert) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(restoreErrorMessage)
                 }
             }
             .padding(.horizontal)
@@ -106,6 +125,35 @@ struct SettingsView: View {
                 .fontWeight(.bold)
                 .foregroundColor(sharedData.selectedTheme.swiftTextColor)
                 .padding(.vertical)
+        }
+    }
+
+    // MARK: Restore Purchases Button
+    private var restorePurchasesButton: some View {
+        Button(action: restorePurchases) {
+            Text("Restore Purchases")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.green)
+                .cornerRadius(10)
+                .shadow(radius: 5)
+                .padding(.horizontal)
+        }
+    }
+
+    // MARK: Restore Purchases Action
+    private func restorePurchases() {
+        Task {
+            do {
+                try await SubscriptionManager.shared.restorePurchases()
+                showRestoreSuccessAlert = true
+                sharedData.updateSubscriptionStatus()
+            } catch {
+                restoreErrorMessage = error.localizedDescription
+                showRestoreErrorAlert = true
+            }
         }
     }
 
@@ -142,30 +190,23 @@ struct SettingsView: View {
         hapticFeedback()
         switch option {
         case .dailyGoal:
-            animatePress { activeSheet = .dailyGoal }
+            activeSheet = .dailyGoal
         case .preferredAmount:
-            animatePress { activeSheet = .preferredAmount }
+            activeSheet = .preferredAmount
         case .appearance:
-            animatePress { activeSheet = .appearance }
+            activeSheet = .appearance
         case .notifications:
-            animatePress { activeSheet = .notifications }
+            activeSheet = .notifications
         case .resetData:
             showEraseDataAlert = true
         case .helpSupport:
-            animatePress { activeSheet = .helpSupport }
+            activeSheet = .helpSupport
         }
     }
     
     // MARK: Haptic Feedback
     private func hapticFeedback() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-    }
-    
-    // MARK: Animate Press
-    private func animatePress(action: @escaping () -> Void) {
-        withAnimation(.easeInOut(duration: 2)) {
-            action()
-        }
     }
 }
 
