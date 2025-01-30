@@ -24,12 +24,6 @@ struct Theme: Identifiable, Equatable {
     
     static let LightTheme = Theme(backgroundColor: .white, rimColor: .lightGray, textColor: .darkGray)
     
-    static let redTheme = Theme(backgroundColor: .myRed, rimColor: .myLighterRed, textColor: .white)
-    
-    static let purpleTheme = Theme(backgroundColor: .purple, rimColor: .red, textColor: .white)
-    
-    static let beigeTheme = Theme(backgroundColor: .myBeige, rimColor: .myGreen, textColor: .myGreen)
-    
     static let defaultTheme = blueTheme
     
     // Equatable implementation
@@ -77,7 +71,7 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @EnvironmentObject var sharedData: SharedData
     @Binding var selectedTheme: Theme
-    let themes: [Theme] = [.blueTheme, .darkTheme, .LightTheme, .beigeTheme, .purpleTheme, .redTheme]
+    let themes: [Theme] = [.blueTheme, .darkTheme, .LightTheme]
 
     let columns = [
         GridItem(.flexible()),
@@ -128,7 +122,7 @@ struct AppearanceSettingsView: View {
 
                                     Text(themeName(for: theme))
                                         .font(.headline)
-                                        .foregroundColor(theme.swiftTextColor)
+                                        .foregroundColor(.white)
                                 }
                                 .padding()
                                 .background(selectedTheme == theme ? Color.myDark.opacity(0.1) : Color.clear)
@@ -139,7 +133,7 @@ struct AppearanceSettingsView: View {
                     }
                     .padding(.horizontal, 16)
 
-                    Spacer()
+                    
                 }
                 .padding()
             }
@@ -156,15 +150,12 @@ struct AppearanceSettingsView: View {
     private func themeName(for theme: Theme) -> String {
         switch theme {
         case .blueTheme:
-            return "Blue"
+            return "Default"
         case .darkTheme:
             return "Dark"
-        case .redTheme:
-            return "Red"
-        case .purpleTheme:
-            return "Purple"
-        case .beigeTheme:
-            return "Beige"
+        case .LightTheme:
+            return "Light"
+        
         default:
             return "Custom"
         }

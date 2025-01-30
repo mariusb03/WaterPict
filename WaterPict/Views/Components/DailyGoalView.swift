@@ -32,6 +32,7 @@ struct DailyGoalView: View {
                         Color.clear
                             .frame(height: 50)
                             .padding(.horizontal)
+                            .padding(.top, 20)
                     }
                     
                     VStack(spacing: 20) {

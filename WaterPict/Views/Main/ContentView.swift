@@ -224,9 +224,11 @@ struct ContentView: View {
         HStack(spacing: 30) {
             actionButton(title: "-", color: .red) {
                 sharedData.updateWaterIntake(amount: -sharedData.preferredAmount, for: Date())
+                sharedData.updateProgress()
             }
             actionButton(title: "+", color: .green) {
                 sharedData.updateWaterIntake(amount: sharedData.preferredAmount, for: selectedDate)
+                sharedData.updateProgress()
             }
         }
     }

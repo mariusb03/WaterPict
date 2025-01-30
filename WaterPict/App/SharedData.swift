@@ -78,6 +78,19 @@ class SharedData: ObservableObject {
         }
     }
     
+    
+    @Published var weeklyProgress: Double = 0.0 // Progress for the week
+       
+    @Published var monthlyProgress: Double = 0.0 // Progress for the month
+    
+    @Published var yearlyProgress: Double = 0.0 // Progress for the year
+    
+    @Published var waterIntakeByDate: [String: Double] = [:]
+    
+    @Published var currentStreak: Int = 0
+    @Published var longestStreak: Int = 0
+    @Published var streakDays: [Date] = [] // Dates in the current streak
+    
     @Published var weeklyGraphData: [Double] = []
     @Published var monthlyGraphData: [Double] = []
     @Published var yearlyGraphData: [Double] = []
@@ -98,10 +111,10 @@ class SharedData: ObservableObject {
     
     private var saveTask: DispatchWorkItem?
 
-    private let dateFormatter: DateFormatter = {
+    public let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone.current // Use the device's current timezone
+        formatter.timeZone = TimeZone.current
         return formatter
     }()
     
@@ -121,63 +134,167 @@ class SharedData: ObservableObject {
     private let waterIntakeKey = "waterIntake"
 
     init() {
-            if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") == false {
-                UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-                saveToUserDefaults()
-            } else {
-                loadFromUserDefaults()
-            }
-            updateGraphData()
-
-            // Fetch subscription data
-        Task { [weak self] in
-                    guard let self = self else { return }
-                    await self.subscriptionManager.fetchProducts()
-                    await self.subscriptionManager.checkSubscriptionStatus()
-                    DispatchQueue.main.async {
-                        self.updateSubscriptionStatus()
-                    }
-                }
+        if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") == false {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            saveToUserDefaults()
+        } else {
+            loadFromUserDefaults()
         }
+        updateGraphData()
+        updateStreaks() // Ensure streaks are calculated after loading data
+
+        // Fetch subscription data
+        Task { [weak self] in
+            guard let self = self else { return }
+            await self.subscriptionManager.fetchProducts()
+            await self.subscriptionManager.checkSubscriptionStatus()
+            DispatchQueue.main.async {
+                self.updateSubscriptionStatus()
+            }
+        }
+    }
 
     // MARK: - Helper Methods
-    func formattedDate(_ date: Date) -> String {
-        return dateFormatter.string(from: date)
+    func formattedDate(_ date: Date, format: String = "yyyy-MM-dd") -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = format
+        return formatter.string(from: date)
     }
     
     @MainActor
-        func updateWaterIntake(amount: Double, for date: Date) {
-            let formattedDate = formattedDate(date)
-            let currentIntake = pastWaterData[formattedDate] ?? 0.0
-            let updatedIntake = max(0, currentIntake + amount)
+    func updateWaterIntake(amount: Double, for date: Date) {
+        let formattedDate = formattedDate(date)
+        let currentIntake = pastWaterData[formattedDate] ?? 0.0
+        let updatedIntake = max(0, currentIntake + amount)
 
-            if updatedIntake != currentIntake {
-                pastWaterData[formattedDate] = updatedIntake
-                progressByDate[formattedDate] = updatedIntake / dailyGoal
-                waterIntake = updatedIntake // Update the current water intake
-                updateGraphData()
-                saveToUserDefaults() // Ensure data is saved immediately
-            }
+        if updatedIntake != currentIntake {
+            pastWaterData[formattedDate] = updatedIntake
+            progressByDate[formattedDate] = updatedIntake / dailyGoal
+            waterIntake = updatedIntake // Update the current water intake
+            updateGraphData()
+            updateProgress()
+            updateStreaks() // Trigger streak update
+            saveToUserDefaults() // Ensure data is saved immediately
         }
+    }
 
     func loadWaterIntake(for date: Date) {
             let formattedDate = formattedDate(date)
             waterIntake = pastWaterData[formattedDate] ?? 0.0
         }
 
-        func updateGraphData() {
-            weeklyGraphData = calculateWeeklyGraphData()
-            monthlyGraphData = calculateMonthlyGraphData()
-            yearlyGraphData = calculateYearlyGraphData()
+    func updateGraphData() {
+        weeklyGraphData = calculateWeeklyGraphData()
+        monthlyGraphData = calculateMonthlyGraphData()
+        yearlyGraphData = calculateYearlyGraphData()
+    }
+
+    func loadTodayData() {
+        let currentDate = formattedDate(Date())
+        waterIntake = pastWaterData[currentDate] ?? 0.0
+        progressByDate[currentDate] = waterIntake / dailyGoal
+        updateProgress()
+        updateStreaks() // Ensure streaks reflect today's data
+        print("Today's water intake loaded: \(waterIntake)") // Debugging log
+    }
+
+    
+    // Method to update progress values
+        func updateProgress() {
+            // Calculate weekly progress
+            weeklyProgress = calculateProgress(for: 7)
+
+            // Calculate monthly progress
+            monthlyProgress = calculateProgress(for: 30)
+
+            // Calculate yearly progress
+            yearlyProgress = calculateProgress(for: 365)
+        }
+    
+    private func calculateProgress(for days: Int) -> Double {
+        let today = Date()
+        
+        // Get dates for the last `days` days
+        let recentDates = (0..<days).compactMap { dayOffset -> String? in
+            if let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) {
+                return formattedDate(date)
+            }
+            return nil
         }
 
-        func loadTodayData() {
-            let currentDate = formattedDate(Date())
-            waterIntake = pastWaterData[currentDate] ?? 0.0
-            progressByDate[currentDate] = waterIntake / dailyGoal
-            print("Today's water intake loaded: \(waterIntake)") // Debugging log
+        // Total intake for recent days
+        let totalIntake = recentDates.reduce(0.0) { total, date in
+            total + (pastWaterData[date] ?? 0.0) // Use pastWaterData instead of waterIntakeByDate
         }
 
+        // Total goal over the period
+        let totalGoal = Double(days) * dailyGoal
+
+        // Calculate progress as a percentage (0.0 to 1.0)
+        return totalGoal > 0 ? min(totalIntake / totalGoal, 1.0) : 0.0
+    }
+    
+    func updateStreaks() {
+        let sortedDates = pastWaterData.keys.compactMap { dateFormatter.date(from: $0) }.sorted()
+        var currentStreakDates: [Date] = []
+        var longestStreakCount = 0
+        var longestStreakDates: [Date] = []
+
+        var currentStreakCount = 0
+        var previousDate: Date? = nil
+
+        for date in sortedDates {
+            let formattedDate = dateFormatter.string(from: date)
+            let waterIntake = pastWaterData[formattedDate] ?? 0.0
+            let isGoalMet = waterIntake >= dailyGoal // Check if the goal is 100% met
+
+            if isGoalMet {
+                if let previous = previousDate {
+                    // Check if the current date is the next consecutive day
+                    if Calendar.current.isDate(date, inSameDayAs: Calendar.current.date(byAdding: .day, value: 1, to: previous)!) {
+                        currentStreakCount += 1
+                        currentStreakDates.append(date)
+                    } else {
+                        // Reset streak if not consecutive
+                        if currentStreakCount > longestStreakCount {
+                            longestStreakCount = currentStreakCount
+                            longestStreakDates = currentStreakDates
+                        }
+                        currentStreakCount = 1
+                        currentStreakDates = [date]
+                    }
+                } else {
+                    currentStreakCount = 1
+                    currentStreakDates = [date]
+                }
+                previousDate = date
+            } else {
+                // Reset streak if daily goal is not met
+                if currentStreakCount > longestStreakCount {
+                    longestStreakCount = currentStreakCount
+                    longestStreakDates = currentStreakDates
+                }
+                currentStreakCount = 0
+                currentStreakDates = []
+                previousDate = nil
+            }
+        }
+
+        // Final check for the last streak
+        if currentStreakCount > longestStreakCount {
+            longestStreakCount = currentStreakCount
+            longestStreakDates = currentStreakDates
+        }
+
+        // Update shared properties
+        currentStreak = currentStreakCount
+        longestStreak = longestStreakCount
+        streakDays = currentStreakDates
+
+        print("Final Streak: Current: \(currentStreak), Longest: \(longestStreak), Streak Dates: \(streakDays)")
+    }
+    
+    
     // MARK: - Graph Data Calculations
     func calculateWeeklyGraphData() -> [Double] {
         var weeklyData: [Double] = Array(repeating: 0.0, count: 7)

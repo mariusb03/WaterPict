@@ -43,7 +43,6 @@ struct UpgradeView: View {
                         upgradeFeatureRow(title: "📷 View all your saved pictures")
                         upgradeFeatureRow(title: "📈 Access detailed statistics")
                         upgradeFeatureRow(title: "🎉 WaterPic Wrapped: Monthly and Yearly Summaries")
-                        upgradeFeatureRow(title: "🌟 Exclusive app themes")
                         upgradeFeatureRow(title: "🖼 Widgets for your home screen")
                         upgradeFeatureRow(title: "🙄 Remove ads")
                     }
