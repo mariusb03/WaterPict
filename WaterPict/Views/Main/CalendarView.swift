@@ -11,7 +11,7 @@ import Charts
 // MARK: - CalendarView with Timer Management
 struct CalendarView: View {
     @EnvironmentObject var sharedData: SharedData
-    @State private var selectedDate: Date = Date()
+    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
     @State private var selectedGraphTab: String = "Week" // Options: "Week", "Month", "Year"
@@ -70,18 +70,39 @@ struct CalendarView: View {
             .padding(.horizontal)
             .onChange(of: selectedDate) { newDate in
                 handleDateChange(newDate)
-            }
+                sharedData.loadWaterIntake(for: newDate)
+                    sharedData.updateProgress()
+                    
+                    // Recheck subscription status if needed
+                    Task {
+                        await SubscriptionManager.shared.checkSubscriptionStatus()
+                        DispatchQueue.main.async {
+                            sharedData.updateSubscriptionStatus()
+                        }
+                    }
+                }
+            
+        
             .onAppear {
+                // Sync selectedDate with the current date if outdated
+                if !Calendar.current.isDate(selectedDate, inSameDayAs: Date()) {
+                    selectedDate = Calendar.current.startOfDay(for: Date())
+                    handleDateChange(selectedDate)
+                }
+
                 startWaveTimer()
                 sharedData.updateProgress() // Ensure progress data is recalculated when the view loads
                 sharedData.updateStreaks()
             }
+            
             .onDisappear {
                 stopWaveTimer()
             }
+            
             .sheet(isPresented: $showImagePicker) {
                 imagePickerSheet
             }
+            
             .sheet(isPresented: $showUpgradeSheet) {
                 UpgradeView() // Upgrade Sheet
                     .environmentObject(sharedData)
@@ -540,14 +561,14 @@ struct CalendarView: View {
     private var imagePickerSheet: some View {
         ImagePicker(selectedImage: $selectedImage) { image in
             if let validImage = selectedImage {
-                let formattedDate = sharedData.formattedDate(selectedDate)
+                // Always use startOfDay for the selected date
+                let formattedDate = sharedData.formattedDate(selectedDate.startOfDay())
                 sharedData.imagesByDate[formattedDate] = validImage
                 sharedData.saveToUserDefaults()
                 sharedData.updateProgress() // Ensure progress data reflects new image changes
             }
         }
     }
-
     // MARK: - Section Header
     private func sectionHeader(title: String, fontSize: Font = .headline) -> some View {
         ZStack {
@@ -586,6 +607,13 @@ struct CalendarView: View {
         sharedData.updateProgress() // Update weekly, monthly, and yearly progress
     }
 }
+
+    //MARK: Date extension
+    extension Date {
+        func startOfDay() -> Date {
+        return Calendar.current.startOfDay(for: self)
+        }
+    }
 
 struct CalendarView_Previews: PreviewProvider {
     static var previews: some View {

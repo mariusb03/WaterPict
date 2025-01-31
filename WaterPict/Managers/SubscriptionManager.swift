@@ -69,29 +69,28 @@ class SubscriptionManager: ObservableObject {
     }
 
     func checkSubscriptionStatus() async {
-        // Step 1: Fetch products
-        await fetchProducts()
-
-        // Step 2: Check locally saved subscription
-        if let savedProductID = loadSubscriptionStatus() {
-            if let product = products.first(where: { $0.id == savedProductID }) {
-                DispatchQueue.main.async {
-                    self.currentSubscription = product
+        do {
+            // Fetch the list of products
+            await fetchProducts()
+            
+            // Check for current entitlements
+            for await result in Transaction.currentEntitlements {
+                switch result {
+                case .verified(let transaction):
+                    // If the transaction matches any subscription product
+                    if productIDs.contains(transaction.productID) {
+                        DispatchQueue.main.async {
+                            self.currentSubscription = self.products.first(where: { $0.id == transaction.productID })
+                            self.saveSubscriptionStatus(productID: transaction.productID)
+                            print("Verified subscription for product ID: \(transaction.productID)")
+                        }
+                    }
+                case .unverified(_, let error):
+                    print("Unverified transaction: \(error.localizedDescription)")
                 }
             }
-        }
-
-        // Step 3: Verify with App Store
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result else {
-                continue
-            }
-            if productIDs.contains(transaction.productID) {
-                DispatchQueue.main.async {
-                    self.currentSubscription = self.products.first(where: { $0.id == transaction.productID })
-                    self.saveSubscriptionStatus(productID: transaction.productID) // Save verified subscription
-                }
-            }
+        } catch {
+            print("Error checking subscription status: \(error.localizedDescription)")
         }
     }
     

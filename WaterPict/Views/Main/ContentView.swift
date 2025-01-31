@@ -12,27 +12,28 @@ struct ContentView: View {
     @EnvironmentObject var sharedData: SharedData
     @State private var selectedTab = 0
     @State private var showImagePicker = false
-    @State private var selectedDate: Date = Date()
     @State private var continuousPhase: CGFloat = 0.0
     @State private var displayedProgress: Double = 0.0
     @State private var showCelebration = false
     @State private var lastCelebratedMilestone: Int = 0
     @State private var showCongratulatoryText = false
+    @State private var waveTimer: Timer?
 
     var body: some View {
         ZStack {
             sharedData.selectedTheme.swiftBackgroundColor
                 .ignoresSafeArea()
-            
+
             VStack {
+                // TabView with lazy views
                 TabView(selection: $selectedTab) {
                     CalendarView()
                         .environmentObject(sharedData)
                         .tag(1)
-                    
+
                     waterIntakeTab
                         .tag(0)
-                    
+
                     SettingsView(
                         preferredAmount: $sharedData.preferredAmount,
                         showInvalidInputAlert: $sharedData.showInvalidInputAlert,
@@ -43,13 +44,15 @@ struct ContentView: View {
                     .tag(2)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                
+
+                // Custom Tab Bar
                 customTabBar
             }
+
             // Celebration Overlay
-                        if showCelebration {
-                            celebrationOverlay
-                        }
+            if showCelebration {
+                celebrationOverlay
+            }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 60)
@@ -60,68 +63,62 @@ struct ContentView: View {
         .sheet(isPresented: $showImagePicker) {
             imagePickerSheet
         }
-        
+        .onAppear {
+            sharedData.updateCurrentDate()
+            startWaveTimer()
+        }
+        .onDisappear {
+            sharedData.stopDateUpdateTimer()
+            stopWaveTimer()
+        }
     }
-    
+
     // MARK: Custom Tab Bar
     private var customTabBar: some View {
         HStack {
             tabBarItem(icon: "calendar", title: "Statistics", tag: 1)
-                .padding()
             tabBarItem(icon: "drop.fill", title: "Water Intake", tag: 0)
-                .padding()
             tabBarItem(icon: "gearshape.fill", title: "Settings", tag: 2)
-                .padding()
         }
-        
         .background(sharedData.selectedTheme.swiftBackgroundColor)
-        
     }
-    
-    // MARK: Tab bar item
+
     private func tabBarItem(icon: String, title: String, tag: Int) -> some View {
         VStack {
             Image(systemName: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(height: 24)
-                .foregroundColor(tabColor(for: tag))
+                .foregroundColor(selectedTab == tag ? sharedData.selectedTheme.swiftTextColor : sharedData.selectedTheme.swiftTextColor.opacity(0.6))
             Text(title)
                 .font(.caption)
-                .foregroundColor(tabColor(for: tag))
+                .foregroundColor(selectedTab == tag ? sharedData.selectedTheme.swiftTextColor : sharedData.selectedTheme.swiftTextColor.opacity(0.6))
         }
         .padding(.vertical, 10)
         .onTapGesture {
             withAnimation { selectedTab = tag }
         }
     }
-    
-    // MARK: Tab Color
-    private func tabColor(for tag: Int) -> Color {
-        selectedTab == tag ? sharedData.selectedTheme.swiftTextColor : sharedData.selectedTheme.swiftTextColor.opacity(0.6)
-    }
-    
+
     // MARK: Water Intake Tab
     private var waterIntakeTab: some View {
         ScrollView {
             ZStack {
                 sharedData.selectedTheme.swiftBackgroundColor
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 20) {
                     if !sharedData.isPremiumUser {
                         BannerAdView(adUnitID: "ca-app-pub-2002393296074661/7345138591")
                             .frame(height: 50)
                             .padding(.horizontal)
                     } else {
-                        // Placeholder to maintain spacing
                         Color.clear
                             .frame(height: 50)
                             .padding(.horizontal)
                     }
-                            
                     sectionHeader(title: "💧 Today's Intake 💧")
-                    
+
                     GeometryReader { geometry in
                         VStack {
                             Spacer()
@@ -129,28 +126,24 @@ struct ContentView: View {
                             Spacer()
                         }
                     }
-                    .frame(height: 300) // Consistent height for wave section
+                    .frame(height: 300)
                     .onAppear {
                         sharedData.loadTodayData()
                         sharedData.updateGraphData()
                     }
-                    
+
                     waterIntakeSummary
-                    
                     waterIntakeButtons
                         .padding(.top, 10)
                 }
-                
                 .padding(.horizontal)
-                
             }
         }
     }
-    
-    // MARK: Wave View
+
     private func waterWaveView(geometry: GeometryProxy) -> some View {
         ZStack {
-            if let image = sharedData.imagesByDate[sharedData.formattedDate(Date())] {
+            if let image = sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] {
                 WaveView(
                     image: image,
                     progress: displayedProgress,
@@ -158,82 +151,59 @@ struct ContentView: View {
                     size: CGSize(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
                 )
                 .onAppear {
-                    startWaveTimer()
-                    displayedProgress = sharedData.progressByDate[sharedData.formattedDate(Date())] ?? 0.0
+                    displayedProgress = sharedData.progressByDate[sharedData.formattedDate(sharedData.currentDate)] ?? 0.0
                 }
-                .onDisappear {
-                    stopWaveTimer()
-                }
-                .onChange(of: sharedData.progressByDate[sharedData.formattedDate(Date())]) { newProgress in
+                .onChange(of: sharedData.progressByDate[sharedData.formattedDate(sharedData.currentDate)]) { newProgress in
                     handleProgressChange(newProgress)
                 }
             } else {
                 placeholderImage(geometry: geometry)
             }
         }
-        .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8) // Consistent frame size
+        .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
         .overlay(
             RoundedRectangle(cornerRadius: 25)
                 .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 12)
                 .shadow(radius: 8)
         )
-        .frame(maxWidth: .infinity, alignment: .center) // Center within the available space
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    // Timer Management
-    @State private var waveTimer: Timer?
-
-    private func startWaveTimer() {
-        waveTimer?.invalidate() // Invalidate any existing timer
-        waveTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            continuousPhase += 0.004
-        }
-    }
-
-    private func stopWaveTimer() {
-        waveTimer?.invalidate()
-        waveTimer = nil
-    }
-    
-    // MARK: Placeholder image
     private func placeholderImage(geometry: GeometryProxy) -> some View {
         Text("Tap to select an image")
             .foregroundColor(.black)
             .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
             .background(Color.gray.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 25)) // Match frame corner radius
+            .clipShape(RoundedRectangle(cornerRadius: 25))
             .onTapGesture {
                 showImagePicker = true
             }
     }
-    
-    // MARK: Intake summary
+
+    // MARK: Water Intake Summary
     private var waterIntakeSummary: some View {
         sectionHeader(
             title: String(
                 format: "%.1f L / %.1f L",
-                (sharedData.pastWaterData[sharedData.formattedDate(selectedDate)] ?? 0.0) / 1000,
+                (sharedData.pastWaterData[sharedData.formattedDate(sharedData.currentDate)] ?? 0.0) / 1000,
                 sharedData.dailyGoal / 1000
             )
         )
         .padding(.top)
     }
-    
+
     // MARK: Buttons
     private var waterIntakeButtons: some View {
         HStack(spacing: 30) {
             actionButton(title: "-", color: .red) {
-                sharedData.updateWaterIntake(amount: -sharedData.preferredAmount, for: Date())
-                sharedData.updateProgress()
+                sharedData.updateWaterIntake(amount: -sharedData.preferredAmount, for: sharedData.currentDate)
             }
             actionButton(title: "+", color: .green) {
-                sharedData.updateWaterIntake(amount: sharedData.preferredAmount, for: selectedDate)
-                sharedData.updateProgress()
+                sharedData.updateWaterIntake(amount: sharedData.preferredAmount, for: sharedData.currentDate)
             }
         }
     }
-    
-    // MARK: Action button
+
     private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
@@ -245,8 +215,8 @@ struct ContentView: View {
                 .shadow(radius: 5)
         }
     }
-    
-    // MARK: Header
+
+    // MARK: Section Header
     private func sectionHeader(title: String) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
@@ -260,69 +230,88 @@ struct ContentView: View {
                 .padding(.vertical)
         }
     }
-    
-    // MARK: Handle progress change
+
+    // MARK: Celebration
+    private var celebrationOverlay: some View {
+        GeometryReader { geometry in
+            if showCelebration {
+                CelebrationFireworksView(geometry: geometry, showText: showCongratulatoryText, milestone: lastCelebratedMilestone)
+            }
+        }
+    }
+
     private func handleProgressChange(_ newProgress: Double?) {
         guard let newProgress = newProgress else { return }
         withAnimation(.easeInOut(duration: 0.5)) {
             displayedProgress = newProgress
         }
-        
         let milestone = Int(newProgress * 100) / 100 * 100
         if milestone > lastCelebratedMilestone {
             triggerCelebration(for: milestone)
         }
     }
-    
-    // MARK: Celebration
-    private var celebrationOverlay: some View {
-        GeometryReader { geometry in
-            ZStack {
-                if showCelebration {
-                    CelebrationFireworksView(geometry: geometry, showText: showCongratulatoryText, milestone: lastCelebratedMilestone)
-                }
-            }
-        }
-    }
-    
-    // MARK: Trigger celebration
+
     private func triggerCelebration(for milestone: Int) {
         lastCelebratedMilestone = milestone
         withAnimation {
             showCelebration = true
             showCongratulatoryText = true
         }
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             withAnimation(.easeOut(duration: 1.5)) {
                 showCongratulatoryText = false
             }
         }
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
             withAnimation {
                 showCelebration = false
             }
         }
     }
-    
-    // MARK: Image picker sheet
+
+    // MARK: Image Picker
     private var imagePickerSheet: some View {
-        ImagePicker(selectedImage: Binding(
-            get: { sharedData.imagesByDate[sharedData.formattedDate(selectedDate)] },
-            set: { newImage, _ in
-                if let validImage = newImage as? UIImage {
-                    sharedData.imagesByDate[sharedData.formattedDate(selectedDate)] = validImage
+        ImagePicker(
+            selectedImage: Binding(
+                get: { sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] },
+                set: { newImage, _ in
+                    if let validImage = newImage as? UIImage {
+                        sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = validImage
+                        sharedData.saveToUserDefaults()
+                    }
+                }
+            ),
+            completion: { image in
+                if let validImage = image {
+                    sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = validImage
                     sharedData.saveToUserDefaults()
                 }
             }
-        ), completion: { image in
-            if let validImage = image {
-                let formattedDate = sharedData.formattedDate(selectedDate)
-                sharedData.imagesByDate[formattedDate] = validImage
-                sharedData.saveToUserDefaults()
-            }
-        })
+        )
+    }
+
+    // MARK: Wave Timer Management
+    private func startWaveTimer() {
+        waveTimer?.invalidate()
+        waveTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            continuousPhase += 0.008 // Slower wave animation
+        }
+    }
+
+    private func stopWaveTimer() {
+        waveTimer?.invalidate()
+        waveTimer = nil
+    }
+}
+
+// MARK: LazyView Wrapper
+struct LazyView<Content: View>: View {
+    let build: () -> Content
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+    var body: Content {
+        build()
     }
 }
 

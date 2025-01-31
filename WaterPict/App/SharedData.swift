@@ -33,7 +33,7 @@ class SharedData: ObservableObject {
         }
     }
     
-    @Published var dailyGoal: Double = 2000.0{
+    @Published var dailyGoal: Double = 3400.0{
         didSet {
             saveToUserDefaults()
         }
@@ -107,6 +107,15 @@ class SharedData: ObservableObject {
             }
         }
     
+    @Published var currentDate: Date = Date() {
+        didSet {
+            // Whenever the currentDate updates, refresh today's data
+            loadTodayData()
+        }
+    }
+    
+    private var dateUpdateTimer: Timer?
+    
     private var subscriptionManager = SubscriptionManager.shared
     
     private var saveTask: DispatchWorkItem?
@@ -159,6 +168,16 @@ class SharedData: ObservableObject {
         let formatter = DateFormatter()
         formatter.dateFormat = format
         return formatter.string(from: date)
+    }
+    
+    func updateCurrentDate() {
+            currentDate = Date() // Update the currentDate property
+        }
+    
+    func updateSubscriptionStatus() {
+        // Update the premium status based on the SubscriptionManager
+        isPremiumUser = SubscriptionManager.shared.currentSubscription != nil
+        print("Premium user status updated: \(isPremiumUser)")
     }
     
     @MainActor
@@ -448,9 +467,23 @@ class SharedData: ObservableObject {
         loadTodayData()
     }
     
-    func updateSubscriptionStatus() {
-            isPremiumUser = subscriptionManager.currentSubscription != nil
+    
+    func startDateUpdateTimer() {
+        dateUpdateTimer?.invalidate() // Stop any existing timer
+        dateUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            let newDate = Calendar.current.startOfDay(for: Date())
+            if newDate != self.currentDate {
+                DispatchQueue.main.async {
+                    self.currentDate = newDate
+                }
+            }
         }
+    }
+
+    func stopDateUpdateTimer() {
+        dateUpdateTimer?.invalidate()
+        dateUpdateTimer = nil
+    }
 
     // MARK: Notification Manager
     class NotificationManager {

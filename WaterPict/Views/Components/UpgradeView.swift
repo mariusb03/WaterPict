@@ -40,11 +40,11 @@ struct UpgradeView: View {
                     
                     // Features Section
                     VStack(alignment: .leading, spacing: 20) {
-                        upgradeFeatureRow(title: "📷 View all your saved pictures")
-                        upgradeFeatureRow(title: "📈 Access detailed statistics")
-                        upgradeFeatureRow(title: "🎉 WaterPic Wrapped: Monthly and Yearly Summaries")
-                        upgradeFeatureRow(title: "🖼 Widgets for your home screen")
                         upgradeFeatureRow(title: "🙄 Remove ads")
+                        upgradeFeatureRow(title: "📷 View all your used pictures")
+                        upgradeFeatureRow(title: "📈 Access to detailed statistics")
+                        upgradeFeatureRow(title: "🎉 WaterPic Wrapped: Monthly and Yearly Summaries (Coming soon!)")
+                        upgradeFeatureRow(title: "🖼 Widgets for your home screen (Coming soon!)")
                     }
                     .padding()
                     .background(sharedData.selectedTheme.swiftRimColor)

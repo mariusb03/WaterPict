@@ -4,17 +4,15 @@ import GoogleMobileAds
 @main
 struct WaterPicApp: App {
     @StateObject var sharedData = SharedData()
+    @Environment(\.scenePhase) var scenePhase
 
     init() {
-        // Initialize Google Mobile Ads SDK
         GADMobileAds.sharedInstance().start(completionHandler: nil)
-        
-        // Request notification permissions and schedule notifications
+
+        // Request notification permissions
         NotificationManager.shared.requestNotificationPermission { granted in
             if granted {
                 NotificationManager.shared.scheduleNotifications(startHour: 8, endHour: 22, interval: 2)
-            } else {
-                print("Notification permissions not granted.")
             }
         }
     }
@@ -24,14 +22,24 @@ struct WaterPicApp: App {
             ContentView()
                 .environmentObject(sharedData)
                 .preferredColorScheme(.light)
-                .onAppear {
-                    Task { [weak sharedData] in
-                        await SubscriptionManager.shared.checkSubscriptionStatus()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            switch newPhase {
+            case .active:
+                // Recheck the subscription status when the app becomes active
+                Task {
+                    do {
+                        try await SubscriptionManager.shared.restorePurchases()
                         DispatchQueue.main.async {
-                            sharedData?.updateSubscriptionStatus()
+                            sharedData.updateSubscriptionStatus()
                         }
+                    } catch {
+                        print("Failed to restore purchases on launch: \(error.localizedDescription)")
                     }
                 }
+            default:
+                break
+            }
         }
     }
 }
