@@ -15,7 +15,7 @@ class SharedData: ObservableObject {
         }
     }
     
-    @Published var imagesByDate: [String: UIImage] = [:]{
+    @Published var imagesByDate: [String: String] = [:] { // Store paths instead
         didSet {
             saveToUserDefaults()
         }
@@ -149,7 +149,6 @@ class SharedData: ObservableObject {
         } else {
             loadFromUserDefaults()
         }
-        updateGraphData()
         updateStreaks() // Ensure streaks are calculated after loading data
 
         // Fetch subscription data
@@ -372,101 +371,156 @@ class SharedData: ObservableObject {
         saveTask = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             let encoder = JSONEncoder()
-
-            // Save theme
-            if let encodedTheme = try? encoder.encode(self.selectedTheme) {
-                UserDefaults.standard.set(encodedTheme, forKey: self.themeKey)
-            }
-
-            // Save other data
-            UserDefaults.standard.set(self.dailyGoal, forKey: self.dailyGoalKey)
-            UserDefaults.standard.set(self.preferredAmount, forKey: self.preferredAmountKey)
-
-            // Save pastWaterData (including today's intake)
-            if let encodedPastWaterData = try? encoder.encode(self.pastWaterData) {
-                UserDefaults.standard.set(encodedPastWaterData, forKey: self.pastWaterDataKey)
-                print("Saving pastWaterData: \(self.pastWaterData)") // Debugging log
-            } else {
-                print("Failed to encode pastWaterData")
-            }
-
-            // Save progressByDate
-            if let encodedProgressByDate = try? encoder.encode(self.progressByDate) {
-                UserDefaults.standard.set(encodedProgressByDate, forKey: self.progressByDateKey)
-                print("Saving progressByDate: \(self.progressByDate)") // Debugging log
-            } else {
-                print("Failed to encode progressByDate")
-            }
-
-            // Save imagesByDate
-            let imagesData = self.imagesByDate.mapValues { $0.pngData() }
-            if let encodedImages = try? encoder.encode(imagesData) {
-                UserDefaults.standard.set(encodedImages, forKey: self.imagesByDateKey)
-            }
-
-            // Save water intake
-            UserDefaults.standard.set(self.waterIntake, forKey: self.waterIntakeKey)
             
-            // Save startTime
-            UserDefaults.standard.set(startTime, forKey: "startTime")
+            DispatchQueue.global(qos: .background).async {
+                // Save primitive values
+                UserDefaults.standard.set(self.dailyGoal, forKey: self.dailyGoalKey)
+                UserDefaults.standard.set(self.preferredAmount, forKey: self.preferredAmountKey)
+                UserDefaults.standard.set(self.notificationStartHour, forKey: "notificationStartHour")
+                UserDefaults.standard.set(self.notificationEndHour, forKey: "notificationEndHour")
+                UserDefaults.standard.set(self.notificationInterval, forKey: "notificationInterval")
+                UserDefaults.standard.set(self.isPremiumUser, forKey: "isPremiumUser")
 
-            // Save endTime
-            UserDefaults.standard.set(endTime, forKey: "endTime")
+                // Save Progress Values
+                UserDefaults.standard.set(self.weeklyProgress, forKey: "weeklyProgress")
+                UserDefaults.standard.set(self.monthlyProgress, forKey: "monthlyProgress")
+                UserDefaults.standard.set(self.yearlyProgress, forKey: "yearlyProgress")
+
+                // Save Water Intake Data
+                if let encodedWaterData = try? encoder.encode(self.pastWaterData) {
+                    UserDefaults.standard.set(encodedWaterData, forKey: "pastWaterData")
+                }
+
+                // Save Progress Data for Each Date
+                if let encodedProgressData = try? encoder.encode(self.progressByDate) {
+                    UserDefaults.standard.set(encodedProgressData, forKey: "progressByDate")
+                }
+
+                // Save Theme
+                if let encodedTheme = try? encoder.encode(self.selectedTheme) {
+                    UserDefaults.standard.set(encodedTheme, forKey: self.themeKey)
+                }
+
+                // Save ImagesByDate
+                if let encodedImagesByDate = try? encoder.encode(self.imagesByDate) {
+                    UserDefaults.standard.set(encodedImagesByDate, forKey: self.imagesByDateKey)
+                }
+
+                DispatchQueue.main.async {
+                    print("✅ UserDefaults saved!")
+                }
+            }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: saveTask!)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: saveTask!)
     }
     
     func loadFromUserDefaults() {
         let decoder = JSONDecoder()
 
-        // Load theme
-        if let savedThemeData = UserDefaults.standard.data(forKey: themeKey),
-           let decodedTheme = try? decoder.decode(Theme.self, from: savedThemeData) {
-            selectedTheme = decodedTheme
-        }
-
-        // Load other data
+        // Load primitive values
         dailyGoal = UserDefaults.standard.double(forKey: dailyGoalKey)
         preferredAmount = UserDefaults.standard.double(forKey: preferredAmountKey)
+        notificationStartHour = UserDefaults.standard.integer(forKey: "notificationStartHour")
+        notificationEndHour = UserDefaults.standard.integer(forKey: "notificationEndHour")
+        notificationInterval = UserDefaults.standard.integer(forKey: "notificationInterval")
+        isPremiumUser = UserDefaults.standard.bool(forKey: "isPremiumUser")
 
-        // Load pastWaterData
-        if let savedPastWaterData = UserDefaults.standard.data(forKey: pastWaterDataKey),
-           let decodedPastWaterData = try? decoder.decode([String: Double].self, from: savedPastWaterData) {
-            pastWaterData = decodedPastWaterData
-            print("Loaded pastWaterData: \(pastWaterData)") // Debugging log
-        } else {
-            print("Failed to load pastWaterData")
+        // Load Progress Values
+        weeklyProgress = UserDefaults.standard.double(forKey: "weeklyProgress")
+        monthlyProgress = UserDefaults.standard.double(forKey: "monthlyProgress")
+        yearlyProgress = UserDefaults.standard.double(forKey: "yearlyProgress")
+
+        // Load Water Intake Data
+        if let savedWaterData = UserDefaults.standard.data(forKey: "pastWaterData"),
+           let decodedWaterData = try? decoder.decode([String: Double].self, from: savedWaterData) {
+            pastWaterData = decodedWaterData
         }
 
-        // Load progressByDate
-        if let savedProgressByDate = UserDefaults.standard.data(forKey: progressByDateKey),
-           let decodedProgressByDate = try? decoder.decode([String: Double].self, from: savedProgressByDate) {
-            progressByDate = decodedProgressByDate
-            print("Loaded progressByDate: \(progressByDate)") // Debugging log
-        } else {
-            print("Failed to load progressByDate")
+        // Load Progress Data for Each Date
+        if let savedProgressData = UserDefaults.standard.data(forKey: "progressByDate"),
+           let decodedProgressData = try? decoder.decode([String: Double].self, from: savedProgressData) {
+            progressByDate = decodedProgressData
         }
 
-        // Load imagesByDate
+        // Load Theme
+        if let savedThemeData = UserDefaults.standard.data(forKey: themeKey),
+           let decodedTheme = try? JSONDecoder().decode(Theme.self, from: savedThemeData) {
+            selectedTheme = decodedTheme
+        } else {
+            selectedTheme = Theme.defaultTheme
+        }
+
+        // Load ImagesByDate
         if let savedImagesData = UserDefaults.standard.data(forKey: imagesByDateKey),
-           let decodedImagesData = try? decoder.decode([String: Data].self, from: savedImagesData) {
-            imagesByDate = decodedImagesData.compactMapValues { UIImage(data: $0) }
+           let decodedImagesByDate = try? decoder.decode([String: String].self, from: savedImagesData) {
+            imagesByDate = decodedImagesByDate
         }
-        
-        // Load startTime
-        if let savedStartTime = UserDefaults.standard.object(forKey: "startTime") as? Date {
-            startTime = savedStartTime
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
         }
 
-        // Load endTime
-        if let savedEndTime = UserDefaults.standard.object(forKey: "endTime") as? Date {
-            endTime = savedEndTime
-        }
-
-        // Load water intake for today
-        loadTodayData()
+        print("✅ UserDefaults loaded successfully")
     }
     
+    func saveImage(_ image: UIImage, forKey key: String) {
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            let filename = getDocumentsDirectory().appendingPathComponent("\(key).jpg")
+            do {
+                try data.write(to: filename)
+                imagesByDate[key] = filename.path // Store full file path
+                saveToUserDefaults()
+            } catch {
+                print("Error saving image: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func saveImageToFile(_ image: UIImage, withName name: String) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        
+        let fileManager = FileManager.default
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsDirectory.appendingPathComponent("\(name).jpg") // Save as JPG
+
+        do {
+            try data.write(to: fileURL)
+            print("✅ Image saved at: \(fileURL.path)")
+            return fileURL.path // Return the file path
+        } catch {
+            print("❌ Error saving image: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    func loadImageFromFile(withName name: String) -> UIImage? {
+        let fileManager = FileManager.default
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsDirectory.appendingPathComponent("\(name).jpg")
+
+        if fileManager.fileExists(atPath: fileURL.path) {
+            return UIImage(contentsOfFile: fileURL.path)
+        } else {
+            print("⚠️ Image not found: \(fileURL.path)")
+            return nil
+        }
+    }
+
+    func getImage(forKey key: String) -> UIImage? {
+        if let imagePath = imagesByDate[key] {
+            print("🔍 Loading image from path: \(imagePath)")
+            let image = UIImage(contentsOfFile: imagePath)
+            if image == nil {
+                print("⚠️ Image could not be loaded from: \(imagePath)")
+            }
+            return image
+        }
+        return nil
+    }
+
+    func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
     
     func startDateUpdateTimer() {
         dateUpdateTimer?.invalidate() // Stop any existing timer
@@ -499,7 +553,7 @@ class SharedData: ObservableObject {
     }
 
     func resetAllData() {
-        dailyGoal = 2000.0
+        dailyGoal = 3400.0
         preferredAmount = 200.0
         waterIntake = 0.0
         imagesByDate.removeAll()

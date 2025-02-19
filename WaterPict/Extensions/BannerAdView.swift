@@ -37,3 +37,5 @@ struct BannerAdView: UIViewRepresentable {
         }
     }
 }
+
+

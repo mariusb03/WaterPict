@@ -22,7 +22,7 @@ struct Theme: Identifiable, Equatable {
     
     static let darkTheme = Theme(backgroundColor: .myDark, rimColor: .myLighterDark, textColor: .white)
     
-    static let LightTheme = Theme(backgroundColor: .white, rimColor: .lightGray, textColor: .darkGray)
+    static let LightTheme = Theme(backgroundColor: .myWhite, rimColor: .myGray, textColor: .myDark)
     
     static let defaultTheme = blueTheme
     
@@ -44,6 +44,7 @@ extension Theme: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
+        
         backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .myBlue
         rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .myLightBlue
         textColor = UIColor(hex: try container.decode(String.self, forKey: .textColor)) ?? .white
@@ -51,9 +52,9 @@ extension Theme: Codable {
         backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .myDark
         rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .myLighterDark
         
-        backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .white
-        rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .lightGray
-        textColor = UIColor(hex: try container.decode(String.self, forKey: .textColor)) ?? .black
+        backgroundColor = UIColor(hex: try container.decode(String.self, forKey: .backgroundColor)) ?? .myWhite
+        rimColor = UIColor(hex: try container.decode(String.self, forKey: .rimColor)) ?? .myGray
+        textColor = UIColor(hex: try container.decode(String.self, forKey: .textColor)) ?? .myDark
         
     }
 
@@ -108,7 +109,7 @@ struct AppearanceSettingsView: View {
                             Button(action: {
                                 selectedTheme = theme
                                 sharedData.selectedTheme = theme
-                                sharedData.saveToUserDefaults() // Save the selected theme
+                                sharedData.saveToUserDefaults() // Save theme change immediately
                             }) {
                                 VStack {
                                     RoundedRectangle(cornerRadius: 10)
@@ -119,7 +120,6 @@ struct AppearanceSettingsView: View {
                                                 .stroke(theme.swiftRimColor, lineWidth: 10)
                                                 .shadow(radius: 1)
                                         )
-
                                     Text(themeName(for: theme))
                                         .font(.headline)
                                         .foregroundColor(.white)

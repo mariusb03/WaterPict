@@ -26,9 +26,9 @@ struct WaveView: View {
                 .cornerRadius(25)
 
             // Secondary Wave (adds a background wave effect)
-            Image(uiImage: image)
+            Image(uiImage: image.resized(to: CGSize(width: size.width, height: size.height)))
                 .resizable()
-                .scaledToFill() // Ensures the image fills the wave area
+                .scaledToFill()
                 .frame(width: size.width, height: size.height)
                 .clipped()
                 .mask(
@@ -59,6 +59,15 @@ struct WaveView: View {
                 .frame(width: size.width, height: size.height)
             )
             .cornerRadius(25)
+        }
+    }
+}
+
+extension UIImage {
+    func resized(to size: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }

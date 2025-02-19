@@ -13,6 +13,9 @@ enum ActiveSheet: Identifiable {
     case appearance
     case notifications
     case helpSupport
+    case resetData
+    
+
 
     var id: Int { hashValue }
 }
@@ -25,7 +28,7 @@ struct SettingsView: View {
     @Binding var selectedTheme: Theme
 
     @State private var activeSheet: ActiveSheet? = nil
-    @State private var showEraseDataAlert = false
+    @State private var showEraseDataSheet = false
     @State private var showRestoreSuccessAlert = false
     @State private var restoreErrorMessage: String = ""
     @State private var showRestoreErrorAlert = false
@@ -86,18 +89,13 @@ struct SettingsView: View {
                     case .helpSupport:
                         HelpSupportView()
                             .presentationCornerRadius(60)
+                    case .resetData:
+                                EraseDataConfirmationView()
+                                    .environmentObject(sharedData)
+                                    .presentationCornerRadius(60) // Matches other sheets
                     }
                 }
-                .alert(isPresented: $showEraseDataAlert) {
-                    Alert(
-                        title: Text("Erase All Data"),
-                        message: Text("Are you sure you want to reset all app data? This action cannot be undone."),
-                        primaryButton: .destructive(Text("Erase")) {
-                            sharedData.resetAllData()
-                        },
-                        secondaryButton: .cancel()
-                    )
-                }
+                
                 .alert("Restore Successful", isPresented: $showRestoreSuccessAlert) {
                     Button("OK", role: .cancel) {}
                 } message: {
@@ -198,7 +196,7 @@ struct SettingsView: View {
         case .notifications:
             activeSheet = .notifications
         case .resetData:
-            showEraseDataAlert = true
+            activeSheet = .resetData
         case .helpSupport:
             activeSheet = .helpSupport
         }

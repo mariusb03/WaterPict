@@ -143,13 +143,15 @@ struct ContentView: View {
 
     private func waterWaveView(geometry: GeometryProxy) -> some View {
         ZStack {
-            if let image = sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] {
-                WaveView(
-                    image: image,
-                    progress: displayedProgress,
-                    phase: continuousPhase,
-                    size: CGSize(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
-                )
+            if let imagePath = sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)],
+                       FileManager.default.fileExists(atPath: imagePath),  // Check if file exists
+                       let image = UIImage(contentsOfFile: imagePath) {
+                        WaveView(
+                            image: image,
+                            progress: displayedProgress,
+                            phase: continuousPhase,
+                            size: CGSize(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
+                        )
                 .onAppear {
                     displayedProgress = sharedData.progressByDate[sharedData.formattedDate(sharedData.currentDate)] ?? 0.0
                 }
@@ -273,28 +275,54 @@ struct ContentView: View {
     private var imagePickerSheet: some View {
         ImagePicker(
             selectedImage: Binding(
-                get: { sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] },
+                get: {
+                    if let imagePath = sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] {
+                        return UIImage(contentsOfFile: imagePath) // Convert file path to UIImage
+                    }
+                    return nil
+                },
                 set: { newImage, _ in
-                    if let validImage = newImage as? UIImage {
-                        sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = validImage
-                        sharedData.saveToUserDefaults()
+                    if let validImage = newImage {
+                        // Save the image to file system and store the file path in sharedData
+                        if let filePath = saveImageToFileSystem(image: validImage) {
+                            sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = filePath
+                            sharedData.saveToUserDefaults()
+                        }
                     }
                 }
             ),
             completion: { image in
                 if let validImage = image {
-                    sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = validImage
-                    sharedData.saveToUserDefaults()
+                    if let filePath = saveImageToFileSystem(image: validImage) {
+                        sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)] = filePath
+                        sharedData.saveToUserDefaults()
+                    }
                 }
             }
         )
     }
 
+    func saveImageToFileSystem(image: UIImage) -> String? {
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            let filename = UUID().uuidString + ".jpg" // Unique filename
+            let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+
+            do {
+                try data.write(to: fileURL)
+                return fileURL.path // Return the saved file path
+            } catch {
+                print("❌ Failed to save image: \(error.localizedDescription)")
+                return nil
+            }
+        }
+        return nil
+    }
+    
     // MARK: Wave Timer Management
     private func startWaveTimer() {
         waveTimer?.invalidate()
         waveTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            continuousPhase += 0.008 // Slower wave animation
+            continuousPhase += 0.008
         }
     }
 

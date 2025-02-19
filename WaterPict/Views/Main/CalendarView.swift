@@ -46,7 +46,8 @@ struct CalendarView: View {
                     
                     // Image and Progress Section
                     if canViewSelectedDate() {
-                        if let image = sharedData.imagesByDate[sharedData.formattedDate(selectedDate)] {
+                        if let imagePath = sharedData.imagesByDate[sharedData.formattedDate(selectedDate)],
+                           let image = UIImage(contentsOfFile: imagePath) { // Convert file path to UIImage
                             progressSection(image: image)
                         } else {
                             noImagePlaceholder
@@ -133,7 +134,7 @@ struct CalendarView: View {
                     }
                 }) {
                     Image(systemName: "chevron.left")
-                        .foregroundColor(.blue)
+                        .foregroundColor(sharedData.selectedTheme.swiftRimColor)
                         .font(.title2)
                         .padding(.trailing, 10)
                 }
@@ -141,10 +142,10 @@ struct CalendarView: View {
                 VStack {
                     Text(calendarMonthYear(selectedDate))
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.blue)
+                        .foregroundColor(sharedData.selectedTheme.swiftRimColor)
                     Divider()
                         .frame(width: 100, height: 2)
-                        .background(Color.blue)
+                        .background(sharedData.selectedTheme.swiftRimColor)
                 }
 
                 Button(action: {
@@ -153,7 +154,7 @@ struct CalendarView: View {
                     }
                 }) {
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.blue)
+                        .foregroundColor(sharedData.selectedTheme.swiftRimColor)
                         .font(.title2)
                         .padding(.leading, 10)
                 }
@@ -184,7 +185,7 @@ struct CalendarView: View {
                                 .font(.footnote)
                                 .foregroundColor(date == selectedDate ? .white : .black)
                                 .padding(8)
-                                .background(date == selectedDate ? Color.blue : Color.clear)
+                                .background(date == selectedDate ? sharedData.selectedTheme.swiftRimColor : Color.clear)
                                 .clipShape(Circle())
                         }
                         .frame(height: 40)
@@ -561,14 +562,34 @@ struct CalendarView: View {
     private var imagePickerSheet: some View {
         ImagePicker(selectedImage: $selectedImage) { image in
             if let validImage = selectedImage {
-                // Always use startOfDay for the selected date
                 let formattedDate = sharedData.formattedDate(selectedDate.startOfDay())
-                sharedData.imagesByDate[formattedDate] = validImage
-                sharedData.saveToUserDefaults()
-                sharedData.updateProgress() // Ensure progress data reflects new image changes
+                
+                // Save the image to disk and get the file path
+                if let filePath = saveImageToFile(validImage, withName: formattedDate) {
+                    sharedData.imagesByDate[formattedDate] = filePath // Store file path, not UIImage
+                    sharedData.saveToUserDefaults()
+                    sharedData.updateProgress()
+                }
             }
         }
     }
+    
+    func saveImageToFile(_ image: UIImage, withName name: String) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        
+        let fileManager = FileManager.default
+        let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = directory.appendingPathComponent("\(name).jpg") // Save as JPG
+        
+        do {
+            try data.write(to: fileURL)
+            return fileURL.path // Return the file path
+        } catch {
+            print("Error saving image: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
     // MARK: - Section Header
     private func sectionHeader(title: String, fontSize: Font = .headline) -> some View {
         ZStack {

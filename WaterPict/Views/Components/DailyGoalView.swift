@@ -118,13 +118,12 @@ struct DailyGoalView: View {
     }
 
     private func saveGoal() {
-        // Validate and convert input
         if let newGoalInLiters = Double(newDailyGoal.replacingOccurrences(of: ",", with: ".")), newGoalInLiters > 0 {
-            sharedData.dailyGoal = newGoalInLiters * 1000 // Update sharedData's dailyGoal in milliliters
-            sharedData.saveToUserDefaults() // Persist changes to UserDefaults
+            sharedData.dailyGoal = newGoalInLiters * 1000 // Convert to milliliters
+            sharedData.saveToUserDefaults() // Save immediately
 
             alertTitle = "Success"
-            alertMessage = String(format: "Daily Goal updated successfully to %.1f liters!", newGoalInLiters)
+            alertMessage = String(format: "Daily Goal updated to %.1f liters!", newGoalInLiters)
         } else {
             alertTitle = "Invalid Input"
             alertMessage = "Please enter a valid number greater than 0."

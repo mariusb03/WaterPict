@@ -164,14 +164,18 @@ struct NotificationsSettingsView: View {
     }
 
     private func saveNotificationSettings() {
-        let startHourComponent = Calendar.current.component(.hour, from: startHour)
-        let endHourComponent = Calendar.current.component(.hour, from: endHour)
+        sharedData.notificationStartHour = Calendar.current.component(.hour, from: startHour)
+        sharedData.notificationEndHour = Calendar.current.component(.hour, from: endHour)
+        sharedData.notificationInterval = reminderInterval
+        sharedData.saveToUserDefaults() // Save notification settings
 
         NotificationManager.shared.requestNotificationPermission { granted in
             if granted {
-                NotificationManager.shared.scheduleNotifications(startHour: startHourComponent, endHour: endHourComponent, interval: reminderInterval)
-            } else {
-                print("Notification permissions not granted.")
+                NotificationManager.shared.scheduleNotifications(
+                    startHour: self.sharedData.notificationStartHour,
+                    endHour: self.sharedData.notificationEndHour,
+                    interval: self.sharedData.notificationInterval
+                )
             }
         }
 
