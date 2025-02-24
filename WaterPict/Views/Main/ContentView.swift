@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import WidgetKit
 
 struct ContentView: View {
     @EnvironmentObject var sharedData: SharedData

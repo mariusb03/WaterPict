@@ -12,7 +12,11 @@ import SwiftUI
 struct WaterPicWidgetBundle: WidgetBundle {
     var body: some Widget {
         WaterPicWidget()
-        WaterPicWidgetControl()
         WaterPicWidgetLiveActivity()
+
+        // ✅ Ensure this is only available on iOS 18.0+
+        if #available(iOSApplicationExtension 18.0, *) {
+            WaterPicWidgetControl()
+        }
     }
 }

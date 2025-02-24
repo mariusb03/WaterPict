@@ -27,10 +27,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		E1933CBB2D6B9B2600B826F1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		E1736ABB2D2EC42F00611EFC /* WaterPict.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WaterPict.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1736ACF2D2EC43000611EFC /* WaterPictTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WaterPictTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1736AD92D2EC43000611EFC /* WaterPictUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WaterPictUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1933CA62D6B9B2400B826F1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		E1933CA82D6B9B2400B826F1 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -96,6 +111,7 @@
 				E1736ABD2D2EC42F00611EFC /* WaterPict */,
 				E1736AD22D2EC43000611EFC /* WaterPictTests */,
 				E1736ADC2D2EC43000611EFC /* WaterPictUITests */,
+				E1933CA52D6B9B2400B826F1 /* Frameworks */,
 				E1736ABC2D2EC42F00611EFC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -110,6 +126,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E1933CA52D6B9B2400B826F1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E1933CA62D6B9B2400B826F1 /* WidgetKit.framework */,
+				E1933CA82D6B9B2400B826F1 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -120,6 +145,7 @@
 				E1736AB72D2EC42F00611EFC /* Sources */,
 				E1736AB82D2EC42F00611EFC /* Frameworks */,
 				E1736AB92D2EC42F00611EFC /* Resources */,
+				E1933CBB2D6B9B2600B826F1 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);

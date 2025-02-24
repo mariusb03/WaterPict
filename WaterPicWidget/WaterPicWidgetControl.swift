@@ -12,6 +12,7 @@ import WidgetKit
 struct WaterPicWidgetControl: ControlWidget {
     static let kind: String = "no.BriRus.WaterPict.WaterPicWidget"
 
+    @available(iOSApplicationExtension 18.0, *)
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(
             kind: Self.kind,
@@ -50,6 +51,11 @@ extension WaterPicWidgetControl {
 
 struct TimerConfiguration: ControlConfigurationIntent {
     static let title: LocalizedStringResource = "Timer Name Configuration"
+
+    func perform() async throws -> some IntentResult {
+        return .result()
+    }
+
 
     @Parameter(title: "Timer Name", default: "Timer")
     var timerName: String

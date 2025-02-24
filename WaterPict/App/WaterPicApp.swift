@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleMobileAds
+import WidgetKit
 
 @main
 struct WaterPicApp: App {
