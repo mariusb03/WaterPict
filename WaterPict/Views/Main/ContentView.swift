@@ -118,41 +118,41 @@ struct ContentView: View {
                             .frame(height: 50)
                             .padding(.horizontal)
                     }
+
                     sectionHeader(title: "💧 Today's Intake 💧")
 
-                    GeometryReader { geometry in
-                        VStack {
-                            Spacer()
-                            waterWaveView(geometry: geometry)
-                            Spacer()
-                        }
+                    // ✅ Use a fixed frame width for better scaling
+                    VStack {
+                        waterWaveView()
                     }
-                    .frame(height: 300)
-                    .onAppear {
-                        sharedData.loadTodayData()
-                        sharedData.updateGraphData()
-                    }
+                   
+                    .frame(maxWidth: 500) // ✅ Set a max width to prevent unwanted stretching
+                    .frame(height: 300) // ✅ Fixed height
+                    .padding(.top, 30)
+                    .padding(.bottom, 10)
 
                     waterIntakeSummary
                     waterIntakeButtons
                         .padding(.top, 10)
                 }
+                .frame(maxWidth: 600) // ✅ Ensures a readable width on iPads
                 .padding(.horizontal)
             }
         }
     }
 
-    private func waterWaveView(geometry: GeometryProxy) -> some View {
+    // MARK: Water wave view
+    private func waterWaveView() -> some View {
         ZStack {
             if let imagePath = sharedData.imagesByDate[sharedData.formattedDate(sharedData.currentDate)],
-                       FileManager.default.fileExists(atPath: imagePath),  // Check if file exists
-                       let image = UIImage(contentsOfFile: imagePath) {
-                        WaveView(
-                            image: image,
-                            progress: displayedProgress,
-                            phase: continuousPhase,
-                            size: CGSize(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
-                        )
+               FileManager.default.fileExists(atPath: imagePath),
+               let image = UIImage(contentsOfFile: imagePath) {
+                WaveView(
+                    image: image,
+                    progress: displayedProgress,
+                    phase: continuousPhase,
+                    size: CGSize(width: 350, height: 350) // ✅ Fixed size for iPads
+                )
                 .onAppear {
                     displayedProgress = sharedData.progressByDate[sharedData.formattedDate(sharedData.currentDate)] ?? 0.0
                 }
@@ -160,22 +160,21 @@ struct ContentView: View {
                     handleProgressChange(newProgress)
                 }
             } else {
-                placeholderImage(geometry: geometry)
+                placeholderImage()
             }
         }
-        .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
+        .frame(width: 350, height: 350) // ✅ Ensure a consistent size
         .overlay(
             RoundedRectangle(cornerRadius: 25)
                 .stroke(sharedData.selectedTheme.swiftRimColor, lineWidth: 12)
                 .shadow(radius: 8)
         )
-        .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    private func placeholderImage(geometry: GeometryProxy) -> some View {
+    private func placeholderImage() -> some View {
         Text("Tap to select an image")
             .foregroundColor(.black)
-            .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
+            .frame(width: 250, height: 250) // ✅ Use fixed size
             .background(Color.gray.opacity(0.1))
             .clipShape(RoundedRectangle(cornerRadius: 25))
             .onTapGesture {
