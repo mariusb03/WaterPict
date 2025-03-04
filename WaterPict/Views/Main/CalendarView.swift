@@ -340,11 +340,13 @@ struct CalendarView: View {
                     .trim(from: 0, to: 1.0)
                     .stroke(Color.orange, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                
 
                 Text("🔥")
                     .font(.largeTitle)
             }
             .frame(width: 50, height: 50)
+            .padding(.bottom)
         }
         .frame(width: 80)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1)))

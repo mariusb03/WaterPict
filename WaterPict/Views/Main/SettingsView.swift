@@ -64,6 +64,8 @@ struct SettingsView: View {
                     
                     restorePurchasesButton
                     
+                    legalSection
+                    
                     Text("App Version: 1.0.0")
                         .font(.footnote)
                         .foregroundColor(sharedData.selectedTheme.swiftTextColor.opacity(0.7))
@@ -124,6 +126,35 @@ struct SettingsView: View {
                 .foregroundColor(sharedData.selectedTheme.swiftTextColor)
                 .padding(.vertical)
         }
+    }
+    
+    // MARK: - Legal & Policies Section
+    private var legalSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Legal & Policies")
+                .font(.headline)
+                .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            // Privacy Policy Link
+            Link("📜 Privacy Policy", destination: URL(string: "https://sites.google.com/view/waterpic/privacy-policy")!)
+                .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                .font(.subheadline)
+                .underline()
+                .frame(maxWidth: .infinity)
+            
+            // Apple Standard EULA Link
+            Link("📄 Apple's Standard EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                .font(.subheadline)
+                .underline()
+                .frame(maxWidth: .infinity)
+        }
+        .padding()
+        .background(sharedData.selectedTheme.swiftRimColor.opacity(0.2))
+        .cornerRadius(10)
+        .shadow(radius: 5)
+        .padding(.horizontal)
     }
 
     // MARK: Restore Purchases Button

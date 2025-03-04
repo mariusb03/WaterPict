@@ -95,7 +95,7 @@ class SharedData: ObservableObject {
     @Published var monthlyGraphData: [Double] = []
     @Published var yearlyGraphData: [Double] = []
     
-    @Published var supportEmail: String = "mariusbr6@gmail.com"
+    @Published var supportEmail: String = "brirusapps@gmail.com"
     @Published var supportWebsite: String = "https://www.yourapp.com"
     
     @Published var showInvalidInputAlert: Bool = false

@@ -64,6 +64,33 @@ struct UpgradeView: View {
                         
                     }
 
+                    // Links to Privacy Policy and EULA
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("By subscribing, you agree to the following:")
+                            .font(.subheadline)
+                            .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                            .frame(maxWidth: .infinity)
+
+                        // Privacy Policy Link
+                        Link("📜 Privacy Policy", destination: URL(string: "https://sites.google.com/view/waterpic/privacy-policy")!)
+                            .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                            .font(.subheadline)
+                            .underline()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        // Apple Standard EULA Link
+                        Link("📄 Apple's Standard EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                            .foregroundColor(sharedData.selectedTheme.swiftTextColor)
+                            .font(.subheadline)
+                            .underline()
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding()
+                    .background(sharedData.selectedTheme.swiftRimColor)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+                    .padding(.horizontal)
+                    
                     // Restore Purchases Button
                     Button(action: restorePurchases) {
                         Text("Restore Purchases")
@@ -71,7 +98,7 @@ struct UpgradeView: View {
                             .foregroundColor(sharedData.selectedTheme.swiftTextColor)
                     }
                     .padding(.top, 10)
-
+                    
                     Spacer()
                 }
                 .padding()
